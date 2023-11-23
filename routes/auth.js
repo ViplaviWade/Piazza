@@ -1,8 +1,4 @@
 const express = require('express')
-const mongoose = require('mongoose')
-
-
-const app = express()
 router = express.Router()
 
 const User = require('../models/user')

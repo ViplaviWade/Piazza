@@ -14,7 +14,9 @@ const postSchema = mongoose.Schema({
         required: true
     },
     expiration_time: {
-        type: Date.now()+5*60*1000,
+        type: Date,
+        default: () => Date.now() + 5 * 60 * 1000,
+        // type: Date.now()+5*60*1000,
         required: true
     },
     status: {
@@ -38,9 +40,13 @@ const postSchema = mongoose.Schema({
         required: true
     },
     timestamp: {
-        type: Date.now()+5*60*1000,
+        type: Date,
+        default: Date.now,
+        // type: Date.now()+5*60*1000,
+        // default: () => Date.now() + 5 * 60 * 1000,
         required: true
-    }
+    },
+
 })
 
-module.exports = mongoose.Model(post, postSchema)
+module.exports = mongoose.model('post', postSchema)
