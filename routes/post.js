@@ -4,7 +4,7 @@ router = express.Router()
 const Post = require('../models/post')
 
 router.post('/createPost', async (req, res) => {
-    
+    console.log(" Request Body Structure : ", req.body)
     const newPost = new Post ({
         post_title: req.body.post_title,
         post_topic: req.body.post_topic,
@@ -14,6 +14,7 @@ router.post('/createPost', async (req, res) => {
         dislikes_count: req.body.dislikes_count,
         comments_count: req.body.comments_count,
     })
+    console.log(" The JSON data is : ", newPost)
     
     try {
         const savedRecord = await newPost.save()
@@ -21,6 +22,7 @@ router.post('/createPost', async (req, res) => {
         res.json(savedRecord)
     } catch (error) {
         console.log("There is error in saving the post......")
+        // console.log(error)
         res.status(500).json({error: error.message})
     }
 })

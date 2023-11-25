@@ -2,15 +2,14 @@ const express = require('express')
 router = express.Router()
 
 const User = require('../models/user')
+const { registerValidation } = require('../validations/validation')
 
-router.get('/', async (req, res) => {
-    try {
-        const users = await User.find()
-        res.status(200).send(users)
-    }
-    catch (err) {
-        res.status(400).send({ message: err })
-    }
+router.post('/register', async (req, res) => {
+    res.send(registerValidation(req.body))
+})
+
+router.post('/login', async (req, res) => {
+
 })
 
 module.exports = router
