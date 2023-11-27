@@ -1,11 +1,14 @@
 const express = require('express')
 router = express.Router()
+const shortid=require('shortid')
 
 const Post = require('../models/post')
+const verifyToken = require('../verifyToken')
 
-router.post('/createPost', async (req, res) => {
+router.post('/createPost', verifyToken, async (req, res) => {
     console.log(" Request Body Structure : ", req.body)
     const newPost = new Post ({
+        post_id:shortid.generate(),
         post_title: req.body.post_title,
         post_topic: req.body.post_topic,
         message: req.body.message,
@@ -13,6 +16,7 @@ router.post('/createPost', async (req, res) => {
         likes_count: req.body.likes_count,
         dislikes_count: req.body.dislikes_count,
         comments_count: req.body.comments_count,
+        // postOwner: req.user.user
     })
     console.log(" The JSON data is : ", newPost)
     

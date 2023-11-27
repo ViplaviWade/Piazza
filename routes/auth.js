@@ -67,12 +67,12 @@ router.post('/login', async (req, res) => {
     if (!passwordValidation) {
         return res.status(400).send({message: "Incorrect password"})
     }
-    res.send("Login Successful")
+    // res.send("Login Successful")
 
     //Generate an authentication token
     const token = jwt.sign({_id: user.id}, process.env.TOKEN_SECRET)
     res.header('auth-token', token).send({'auth-token':token})
-    return
+    // return res.send(token)
 })
 
 module.exports = router
