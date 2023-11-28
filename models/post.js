@@ -45,11 +45,11 @@ const postSchema = mongoose.Schema({
         // type: Date.now()+5*60*1000,
         // default: () => Date.now() + 5 * 60 * 1000,
         required: true
+    },
+    postOwner: {
+        type: String,
+        required: true
     }
-    // postowner: {
-    //     type: String,
-    //     required: true
-    // }
 })
 
 module.exports = mongoose.model('post', postSchema)
