@@ -15,7 +15,7 @@ const postSchema = mongoose.Schema({
     },
     expiration_time: {
         type: Date,
-        default: () => Date.now() + 5 * 60 * 1000,
+        // default: () => Date.now() + 5 * 60 * 1000,
         // type: Date.now()+5*60*1000,
         required: true
     },
@@ -35,6 +35,11 @@ const postSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    comment: [
+        {
+            type: String
+        }
+    ],
     post_id: {
         type: String,
         required: true

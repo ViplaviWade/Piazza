@@ -19,10 +19,10 @@ async function auth(req, res, next) {
     try {
     
         const verifiedToken = jwt.verify(token, process.env.TOKEN_SECRET)
-        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", verifiedToken)
+        // console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", verifiedToken)
 
         const user = await User.findById(verifiedToken._id)
-        console.log("=============================================", user)
+        // console.log("=============================================", user)
 
         // req.user = verifiedToken
         // console.log(".............................................", req.user)
@@ -43,7 +43,7 @@ async function auth(req, res, next) {
             _id: user._id,
             username: user.username
         }
-        console.log("Request user is : ", req.user)
+        // console.log("Request user is : ", req.user)
 
         next()
 

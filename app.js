@@ -7,8 +7,8 @@ require('dotenv/config')
 
 app.use(bodyParser.json())
 
-const cors=require("cors")
-app.use(cors())
+// const cors=require("cors")
+// app.use(cors())
 
 
 const authRoute = require('./routes/auth')
