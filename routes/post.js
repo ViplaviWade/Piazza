@@ -4,8 +4,9 @@ const shortid=require('shortid')
 
 const User = require('../models/user')
 const Post = require('../models/post')
-const verifyToken = require('../verifyToken')
 const Comment=require('../models/comment')
+const verifyToken = require('../verifyToken')
+
 
 router.post('/createPost', verifyToken, async (req, res) => {
     console.log(" Request User/ Username : ", req.user)
@@ -39,17 +40,6 @@ router.post('/createPost', verifyToken, async (req, res) => {
         console.log("There is error in saving the post......")
         // console.log(error)
         res.status(500).json({error: error.message})
-    }
-})
-
-router.get('/getAllPosts', verifyToken, async (req, res) => {
-    try {
-        console.log(".......................................................")
-        const posts = await Post.find()
-        console.log("Posts are : ", posts)
-        res.send(posts)
-    } catch (err) {
-        res.status(400).send({message: err})
     }
 })
 
@@ -94,15 +84,18 @@ router.put('/updatePost', verifyToken,async (req, res) => {
     }
 })
 
-router.put('/action', verifyToken, async (req, res) => {
+router.put('/performAction', verifyToken, async (req, res) => {
     const {postId, action} = req.query
     const loggedUser = req.user.username;
-    const commentBody=req.body.comment
+    const commentBody = req.body.comment
     const currentTime = Date.now();
+
+    let updateQuery = {};
+    let userAlreadyPerformedAction = false;
 
     try {
         const postExists = await Post.findOne({post_id: postId})
-        console.log("Post exists...............")
+
         if(!postExists) {
             return res.status(404).json({error: "Post not found"})
         }
@@ -114,31 +107,63 @@ router.put('/action', verifyToken, async (req, res) => {
         }
 
         if(postExists.expiration_time < currentTime) {
+            
             console.log("Post is expired..............")
             return res.status(403).json({error: "Post expired for performing any action"})
         }
+        
+        if(action == 'like') {
+            if (!postExists.like_users || !postExists.like_users.includes(loggedUser)) {
+                await Post.findByIdAndUpdate(
+                    postExists._id,
+                    { $push: { like_users: loggedUser }, $inc: { likes_count: 1 } }
+                );
+            } else {
+                userAlreadyPerformedAction = true;
+            }
+        }
 
-        // if(action == 'like') {
-        //     console.log("Action LIKE is performed")
-        //     postExists.likes_count += 1
-        // }
+        if(action =='dislike') {
+            if (!postExists.dislike_users || !postExists.dislike_users.includes(loggedUser)) {
+                await Post.findByIdAndUpdate(
+                    postExists._id,
+                    { $push: { dislike_users: loggedUser }, $inc: { dislikes_count: 1 } }
+                );
+            } else {
+                userAlreadyPerformedAction = true;
+            }
+        }
 
-        // if(action =='dislike') {
-        //     console.log("Action DISLIKE is performed")
-        //     postExists.dislikes_count -= 1
-        // }
+        if(action == 'comment') {
+            const newComment = {
+                commentId: shortid.generate(),
+                username: loggedUser,
+                comment: commentBody
+            }
+            await Post.findByIdAndUpdate(
+                postExists._id,
+                {$push: {comments: newComment}, $inc: {comments_count: 1}}
+            );
+            return res.status(200).json({message: "Comment posted successfully."})
+            // console.log("Action Comment is performed.")
+            // const newComment= Comment({
+            //     commentId:shortid.generate(),
+            //     postId:postId,
+            //     username:loggedUser,
+            //     comment:commentBody
+            // })
+            // postExists.comments_count += 1
+            // await newComment.save()
+        }
+        
+        if (userAlreadyPerformedAction) {
+            return res.status(400).json({ message: `User has already ${action === 'like' ? 'liked' : 'disliked'} the post` });
+        }
 
-        // if(action == 'comment') {
-        //     console.log("Action Comment is performed.")
-        //     const newComment= Comment({
-        //         commentId:shortid.generate(),
-        //         postId:postId,
-        //         username:loggedUser,
-        //         comment:commentBody
-        //     })
-        //     await newComment.save()
-        // }
-
+        res.json({ message: `User has ${action === 'like' ? 'liked' : 'disliked'} the post` });
+        if (userAlreadyPerformedAction) {
+            return res.status(400).json({ error: `User has already ${action === 'like' ? 'liked' : 'disliked'} the post` });
+        }
         // await postExists.save();
         // res.status(200).json({message: "Action performed successfully."})
         
@@ -162,7 +187,7 @@ router.get('/getpostById', verifyToken, async (req, res) => {
     }
 })
 
-router.get('/mostActivePost', verifyToken, async (req, res)=> {
+router.get('/getMostActivePost', verifyToken, async (req, res)=> {
     const {topic, action} = req.query
 
     try {
@@ -186,7 +211,7 @@ router.get('/mostActivePost', verifyToken, async (req, res)=> {
     }
 })
 
-router.get('/messagePerTopic', verifyToken, async (req, res) => {
+router.get('/getPostPerTopic', verifyToken, async (req, res) => {
     const {topic} = req.query
 
     try {
@@ -222,6 +247,17 @@ router.get('/getExpiredPosts',verifyToken, async (req, res)=>{
 
     } catch (error) {
         res.status(500).json({error: "Internal server error"})
+    }
+})
+
+router.get('/getAllPosts', verifyToken, async (req, res) => {
+    try {
+        console.log(".......................................................")
+        const posts = await Post.find()
+        console.log("Posts are : ", posts)
+        res.send(posts)
+    } catch (err) {
+        res.status(400).send({message: err})
     }
 })
 

@@ -23,23 +23,31 @@ const postSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    like_users: [{
+        type: String
+    }],
     likes_count: {
         type: Number,
         required: true
     },
+    dislike_users: [{
+        type: String
+    }],
     dislikes_count: {
         type: Number,
         required: true
     },
+    comments: [
+        {
+            commentId: { type: String, required: true },
+            username: { type: String, required: true },
+            comment: { type: String, required: true }
+        }
+    ],
     comments_count: {
         type: Number,
         required: true
     },
-    comment: [
-        {
-            type: String
-        }
-    ],
     post_id: {
         type: String,
         required: true
