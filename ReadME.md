@@ -30,4 +30,10 @@ npm install jsonwebtoken
 *** CORS is a mechanism ny which resources are shared accross different platforms ***
 npm install cors
 
+*** GitHub clone on VM ***
+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
+https://github.com/ViplaviWade/Piazza.git
+
+https://ViplaviWade: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@github.com/ViplaviWade/Piazza.git
+
 

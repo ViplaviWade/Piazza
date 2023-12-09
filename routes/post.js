@@ -4,41 +4,33 @@ const shortid=require('shortid')
 
 const User = require('../models/user')
 const Post = require('../models/post')
-const Comment=require('../models/comment')
 const verifyToken = require('../verifyToken')
+const post = require('../models/post')
 
 
 router.post('/createPost', verifyToken, async (req, res) => {
-    console.log(" Request User/ Username : ", req.user)
+
     const currentTime = Date.now();
     const expiration_time = req.body.expiration_time;
     const expirationTimeInMilliseconds = currentTime + expiration_time * 60 * 1000;
+
     const newPost = new Post ({
         post_id:shortid.generate(),
         post_title: req.body.post_title,
         post_topic: req.body.post_topic,
         message: req.body.message,
         status: 'LIVE',
-        // req.body.status,
         likes_count: 0,
-        // req.body.likes_count,
         dislikes_count: 0,
-        // req.body.dislikes_count,
         comments_count: 0,
-        // req.body.comments_count,
         postOwner: req.user.username,
         expiration_time: new Date(expirationTimeInMilliseconds)
-        // req.user.expiration_time + (60*1000)
     })
-    console.log(" The JSON data is : ", newPost)
     
     try {
         const savedRecord = await newPost.save()
-        console.log("Post is saved...............")
         res.json(savedRecord)
     } catch (error) {
-        console.log("There is error in saving the post......")
-        // console.log(error)
         res.status(500).json({error: error.message})
     }
 })
@@ -49,17 +41,11 @@ router.put('/updatePost', verifyToken,async (req, res) => {
     const loggedUser = req.user.username;
 
     try {
-
         const postExists = await Post.findOne({post_id: postId})
 
         if(!postExists) {
             return res.status(404).json({error: "Post not found"})
         }
-        // updatedPost = new Post({
-        //     post_title: req.body.post_title,
-        //     post_topic: req.body.post_topic,
-        //     message: req.body.message,
-        // })
 
         if(postExists.postOwner != loggedUser) {
             return res
@@ -85,12 +71,12 @@ router.put('/updatePost', verifyToken,async (req, res) => {
 })
 
 router.put('/performAction', verifyToken, async (req, res) => {
+
     const {postId, action} = req.query
     const loggedUser = req.user.username;
     const commentBody = req.body.comment
     const currentTime = Date.now();
 
-    let updateQuery = {};
     let userAlreadyPerformedAction = false;
 
     try {
@@ -107,8 +93,6 @@ router.put('/performAction', verifyToken, async (req, res) => {
         }
 
         if(postExists.expiration_time < currentTime) {
-            
-            console.log("Post is expired..............")
             return res.status(403).json({error: "Post expired for performing any action"})
         }
         
@@ -144,16 +128,8 @@ router.put('/performAction', verifyToken, async (req, res) => {
                 postExists._id,
                 {$push: {comments: newComment}, $inc: {comments_count: 1}}
             );
+
             return res.status(200).json({message: "Comment posted successfully."})
-            // console.log("Action Comment is performed.")
-            // const newComment= Comment({
-            //     commentId:shortid.generate(),
-            //     postId:postId,
-            //     username:loggedUser,
-            //     comment:commentBody
-            // })
-            // postExists.comments_count += 1
-            // await newComment.save()
         }
         
         if (userAlreadyPerformedAction) {
@@ -164,8 +140,6 @@ router.put('/performAction', verifyToken, async (req, res) => {
         if (userAlreadyPerformedAction) {
             return res.status(400).json({ error: `User has already ${action === 'like' ? 'liked' : 'disliked'} the post` });
         }
-        // await postExists.save();
-        // res.status(200).json({message: "Action performed successfully."})
         
     } catch (error) {
         console.error(error);
@@ -174,7 +148,9 @@ router.put('/performAction', verifyToken, async (req, res) => {
 })
 
 router.get('/getpostById', verifyToken, async (req, res) => {
+
     const {postId} = req.query
+
     try {
         const postExists = await Post.findOne({post_id: postId})
 
@@ -188,35 +164,38 @@ router.get('/getpostById', verifyToken, async (req, res) => {
 })
 
 router.get('/getMostActivePost', verifyToken, async (req, res)=> {
-    const {topic, action} = req.query
+
+    const {topic} = req.query
 
     try {
-        let sortQuery; 
-        if (action === 'likes') {
-            sortQuery = { likes: -1 };
-        } else if (action === 'dislikes') {
-            sortQuery = { dislikes: -1 };
-        } else {
-          // Default to sorting by timestamp if action is neither 'likes' nor 'dislikes'
-            sortQuery = { timestamp: -1 };
+        const postExists = await Post.aggregate([
+            { $match: { post_topic: topic } },
+            {
+                $addFields: {
+                    totalInteractions: { $add: ['$likes_count', '$dislikes_count'] },
+                },
+            },
+            { $sort: { totalInteractions: -1 } },
+            { $limit: 1 },
+        ]);
+        
+        if (!postExists || postExists.length === 0) {
+            return res.status(404).json({error: `No active posts found for the topic: ${topic}`})
         }
       
-        const postExists = await Post.findOne({ postTopic: topic })
-            .sort({ ...sortQuery, timestamp: -1 }) // Add timestamp to ensure sorting by timestamp as a tiebreaker
-            .exec();
-      
-        res.json(postExists);
+        res.json(postExists[0]);
       } catch (err) {
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: err });
     }
 })
 
 router.get('/getPostPerTopic', verifyToken, async (req, res) => {
+
     const {topic} = req.query
 
     try {
         const postExists = await Post.find({post_topic: topic})
-
+        console.log(postExists)
         if(!postExists) {
             return res.status(404).json({error: "Post not found"})
         }
@@ -228,20 +207,19 @@ router.get('/getPostPerTopic', verifyToken, async (req, res) => {
 })
 
 router.get('/getExpiredPosts',verifyToken, async (req, res)=>{
+
+    const { topic } = req.query;
     const currentTime = Date.now();
 
     try {
-        const postExists = await Post.find({ expiration_time: { $lt: currentTime }})
-        .sort({ timestamp: -1})
-        .exec();
+        const postExists = await Post.find({
+            post_topic: topic,
+            expiration_time: { $lt: currentTime }
+        }).sort({ timestamp: -1}).exec();
 
-        console.log("Expired Posts are : ", postExists)
-
-        // Update the status of posts as 'EXPIRED'
-        await Post.updateMany(
-            { _id: { $in: postExists.map(post => post._id) } },
-            { $set: { status: 'EXPIRED' } }
-        );
+        if (!postExists || postExists.length === 0) {
+            return res.status(404).json({ error: `No expired posts found for the topic: ${topic}` });
+        }
 
         res.send(postExists)
 
@@ -251,8 +229,8 @@ router.get('/getExpiredPosts',verifyToken, async (req, res)=>{
 })
 
 router.get('/getAllPosts', verifyToken, async (req, res) => {
+
     try {
-        console.log(".......................................................")
         const posts = await Post.find()
         console.log("Posts are : ", posts)
         res.send(posts)

@@ -9,8 +9,8 @@ const jwt = require('jsonwebtoken')
 
 router.post('/register', async (req, res) => {
 
-    // Validation for user details
     const { error } = registerValidation(req.body)
+
     if (error) {
         return res.send({message: error['details'][0]['message']})
     }
@@ -34,16 +34,15 @@ router.post('/register', async (req, res) => {
         username: req.body.username,
         email: req.body.email,
         password: hashedPassword
-        // password: req.body.password
     })
+
     try {
         const savedUser = await user.save()
         res.send(savedUser)
     } catch (err) {
         res.status(400).send({message: err})
     }
-    
-    // res.send(registerValidation(req.body))
+
 })
 
 router.post('/login', async (req, res) => {
@@ -60,19 +59,17 @@ router.post('/login', async (req, res) => {
     }
 
     //Check user password
+
     const passwordValidation = await bcryptjs.compare(req.body.password.trim(), user.password.trim())
-    console.log("Request Body Password : ", req.body.password)
-    console.log("Database User Password : ", user.password)
-    console.log(passwordValidation)
+    
     if (!passwordValidation) {
         return res.status(400).send({message: "Incorrect password"})
     }
-    // res.send("Login Successful")
 
     //Generate an authentication token
     const token = jwt.sign({_id: user.id}, process.env.TOKEN_SECRET)
     res.header('auth-token', token).send({'auth-token':token})
-    // return res.send(token)
+
 })
 
 module.exports = router

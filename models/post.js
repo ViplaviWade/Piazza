@@ -15,8 +15,6 @@ const postSchema = mongoose.Schema({
     },
     expiration_time: {
         type: Date,
-        // default: () => Date.now() + 5 * 60 * 1000,
-        // type: Date.now()+5*60*1000,
         required: true
     },
     status: {
@@ -55,8 +53,6 @@ const postSchema = mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now,
-        // type: Date.now()+5*60*1000,
-        // default: () => Date.now() + 5 * 60 * 1000,
         required: true
     },
     postOwner: {

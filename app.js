@@ -7,20 +7,11 @@ require('dotenv/config')
 
 app.use(bodyParser.json())
 
-// const cors=require("cors")
-// app.use(cors())
-
-
 const authRoute = require('./routes/auth')
 const postRoute = require('./routes/post')
 
 mongoose.connect(process.env.DB_CONNECTOR)
 const db = mongoose.connection;
-
-app.get("/health",async(req,res)=>{
-    console.log("===================================")
-    res.send("test")
-})
 
 app.use('/api', postRoute)
 app.use('/api', authRoute)
